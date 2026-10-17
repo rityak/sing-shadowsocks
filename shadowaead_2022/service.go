@@ -417,11 +417,11 @@ func (s *Service) newPacket(ctx context.Context, conn N.PacketConn, buffer *buf.
 	}
 
 	var sessionId, packetId uint64
-	err := binary.Read(buffer, binary.BigEndian, &sessionId)
+	sessionId, err := readUint64(buffer)
 	if err != nil {
 		return err
 	}
-	err = binary.Read(buffer, binary.BigEndian, &packetId)
+	packetId, err = readUint64(buffer)
 	if err != nil {
 		return err
 	}
@@ -474,7 +474,7 @@ process:
 	}
 
 	var epoch uint64
-	err = binary.Read(buffer, binary.BigEndian, &epoch)
+	epoch, err = readUint64(buffer)
 	if err != nil {
 		goto returnErr
 	}
@@ -485,7 +485,7 @@ process:
 	}
 
 	var paddingLen uint16
-	err = binary.Read(buffer, binary.BigEndian, &paddingLen)
+	paddingLen, err = readUint16(buffer)
 	if err != nil {
 		err = E.Cause(err, "read padding length")
 		goto returnErr
@@ -545,12 +545,12 @@ func (w *serverPacketWriter) WritePacket(buffer *buf.Buffer, destination M.Socks
 	}
 
 	common.Must(
-		binary.Write(header, binary.BigEndian, w.session.sessionId),
-		binary.Write(header, binary.BigEndian, w.session.nextPacketId()),
+		writeUint64(header, w.session.sessionId),
+		writeUint64(header, w.session.nextPacketId()),
 		header.WriteByte(HeaderTypeServer),
-		binary.Write(header, binary.BigEndian, uint64(w.time().Unix())),
-		binary.Write(header, binary.BigEndian, w.session.remoteSessionId),
-		binary.Write(header, binary.BigEndian, uint16(paddingLen)), // padding length
+		writeUint64(header, uint64(w.time().Unix())),
+		writeUint64(header, w.session.remoteSessionId),
+		writeUint16(header, uint16(paddingLen)), // padding length
 	)
 
 	if paddingLen > 0 {

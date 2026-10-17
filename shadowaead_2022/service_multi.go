@@ -291,11 +291,11 @@ func (s *MultiService[U]) newPacket(ctx context.Context, conn N.PacketConn, buff
 	}
 
 	var sessionId, packetId uint64
-	err := binary.Read(buffer, binary.BigEndian, &sessionId)
+	sessionId, err := readUint64(buffer)
 	if err != nil {
 		return err
 	}
-	err = binary.Read(buffer, binary.BigEndian, &packetId)
+	packetId, err = readUint64(buffer)
 	if err != nil {
 		return err
 	}
@@ -351,7 +351,7 @@ process:
 	}
 
 	var epoch uint64
-	err = binary.Read(buffer, binary.BigEndian, &epoch)
+	epoch, err = readUint64(buffer)
 	if err != nil {
 		goto returnErr
 	}
@@ -362,7 +362,7 @@ process:
 	}
 
 	var paddingLen uint16
-	err = binary.Read(buffer, binary.BigEndian, &paddingLen)
+	paddingLen, err = readUint16(buffer)
 	if err != nil {
 		err = E.Cause(err, "read padding length")
 		goto returnErr

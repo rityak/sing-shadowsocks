@@ -526,8 +526,8 @@ func (c *clientPacketConn) WritePacket(buffer *buf.Buffer, destination M.Socksad
 	}
 
 	common.Must(
-		binary.Write(header, binary.BigEndian, c.session.sessionId),
-		binary.Write(header, binary.BigEndian, c.session.nextPacketId()),
+		writeUint64(header, c.session.sessionId),
+		writeUint64(header, c.session.nextPacketId()),
 	)
 
 	if c.udpCipher == nil && pskLen > 1 {
@@ -550,8 +550,8 @@ func (c *clientPacketConn) WritePacket(buffer *buf.Buffer, destination M.Socksad
 	}
 	common.Must(
 		header.WriteByte(HeaderTypeClient),
-		binary.Write(header, binary.BigEndian, uint64(c.time().Unix())),
-		binary.Write(header, binary.BigEndian, uint16(paddingLen)), // padding length
+		writeUint64(header, uint64(c.time().Unix())),
+		writeUint16(header, uint16(paddingLen)), // padding length
 	)
 
 	if paddingLen > 0 {
@@ -601,11 +601,11 @@ func (c *clientPacketConn) ReadPacket(buffer *buf.Buffer) (M.Socksaddr, error) {
 	}
 
 	var sessionId, packetId uint64
-	err = binary.Read(buffer, binary.BigEndian, &sessionId)
+	sessionId, err = readUint64(buffer)
 	if err != nil {
 		return M.Socksaddr{}, err
 	}
-	err = binary.Read(buffer, binary.BigEndian, &packetId)
+	packetId, err = readUint64(buffer)
 	if err != nil {
 		return M.Socksaddr{}, err
 	}
@@ -650,7 +650,7 @@ func (c *clientPacketConn) ReadPacket(buffer *buf.Buffer) (M.Socksaddr, error) {
 	}
 
 	var epoch uint64
-	err = binary.Read(buffer, binary.BigEndian, &epoch)
+	epoch, err = readUint64(buffer)
 	if err != nil {
 		return M.Socksaddr{}, err
 	}
@@ -683,7 +683,7 @@ func (c *clientPacketConn) ReadPacket(buffer *buf.Buffer) (M.Socksaddr, error) {
 	}
 
 	var clientSessionId uint64
-	err = binary.Read(buffer, binary.BigEndian, &clientSessionId)
+	clientSessionId, err = readUint64(buffer)
 	if err != nil {
 		return M.Socksaddr{}, err
 	}
@@ -693,7 +693,7 @@ func (c *clientPacketConn) ReadPacket(buffer *buf.Buffer) (M.Socksaddr, error) {
 	}
 
 	var paddingLen uint16
-	err = binary.Read(buffer, binary.BigEndian, &paddingLen)
+	paddingLen, err = readUint16(buffer)
 	if err != nil {
 		return M.Socksaddr{}, E.Cause(err, "read padding length")
 	}
@@ -759,8 +759,8 @@ func (c *clientPacketConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 	}
 
 	common.Must(
-		binary.Write(buffer, binary.BigEndian, c.session.sessionId),
-		binary.Write(buffer, binary.BigEndian, c.session.nextPacketId()),
+		writeUint64(buffer, c.session.sessionId),
+		writeUint64(buffer, c.session.nextPacketId()),
 	)
 
 	if c.udpCipher == nil && pskLen > 1 {
@@ -783,8 +783,8 @@ func (c *clientPacketConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 	}
 	common.Must(
 		buffer.WriteByte(HeaderTypeClient),
-		binary.Write(buffer, binary.BigEndian, uint64(c.time().Unix())),
-		binary.Write(buffer, binary.BigEndian, uint16(paddingLen)), // padding length
+		writeUint64(buffer, uint64(c.time().Unix())),
+		writeUint16(buffer, uint16(paddingLen)), // padding length
 	)
 
 	if paddingLen > 0 {
